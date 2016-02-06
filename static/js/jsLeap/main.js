@@ -10,27 +10,24 @@ function initMap() {
   map = new google.maps.Map(document.getElementById('map'), {
     center: {
       lat: columbiaLat,
-      lng: columbiaLon
+      lng: columbiaLon,
     },
     zoom: zoomLevel,
-    mapTypeId: google.maps.MapTypeId.SATELLITE
+    mapTypeId: google.maps.MapTypeId.SATELLITE,
+    disableDefaultUI: true
+
   });
   mapInitialized = true;
 
-  // Create the search box and link it to the UI element.
   var input = document.getElementById('pac-input');
   var searchBox = new google.maps.places.SearchBox(input);
   map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
 
-  // Bias the SearchBox results towards current map's viewport.
   map.addListener('bounds_changed', function() {
     searchBox.setBounds(map.getBounds());
   });
 
   var markers = [];
-  // [START region_getplaces]
-  // Listen for the event fired when the user selects a prediction and retrieve
-  // more details for that place.
   searchBox.addListener('places_changed', function() {
     var places = searchBox.getPlaces();
 
@@ -88,13 +85,13 @@ function GestureState() {
   this.palmCoolDown = 0;
 }
 
-const MAXXPOS = 225;
-const MAXYPOS = 185;
-const MAXZPOS = 300;
+const MAXXPOS = 400;
+const MAXYPOS = 500;
+const MAXZPOS = 350;
 const PALMMOVEFRAMERATE = 4;
 const PALMCOOLDOWN = 40;
 const PALMMOVEVELOCTIY = 500;
-const FISTFRAMERATE = 20;
+const LOCKFRAMERATE = 20;
 
 function Gesture(xpos, ypos, zpos, pdirection, normalUp, isLocked) {
   if (!isLocked) {
@@ -119,6 +116,7 @@ function Gesture(xpos, ypos, zpos, pdirection, normalUp, isLocked) {
     this.palmDirection = pdirection;
     this.normalUp = normalUp;
   }
+  this.locked = isLocked;
 }
 
 var gstate = new GestureState();
@@ -177,7 +175,7 @@ Leap.loop({
     var normalUp = checkNormal(hand);
 
     if (checkFist(hand)) {
-      if (gstate.numFists++ > FISTFRAMERATE) {
+      if (gstate.numFists++ > LOCKFRAMERATE) {
         if (!gstate.isFisting) {
           gstate.isFisting = true;
           gstate.locked = !gstate.locked;
@@ -246,20 +244,43 @@ function checkPalm(hand) {
 }
 
 var isLocked = false;
+var lockCounter = 1;
+var imageMode = false;
+var delayLock = false;
+
 var currentZoomLevel = zoomLevel;
 
 const MAPXVELOCITY = 100;
 const MAPYVELOCITY = -150;
 
-var navigateInstaLeap = function(gesture) {
-  var isLocked = (gesture.xpos === 0 ) && (gesture.ypos === 0 ) && (gesture.zpos === 0 ) ? true : false;
+var toggleImages = function() {
+  document.getElementById("shader").style.display = imageMode ? "block" : "none";
+}
 
-  if(gesture.palmDirection !== 0){
+var navigateInstaLeap = function(gesture) {
+  isLocked = (gesture.xpos === 0 ) && (gesture.ypos === 0 ) && (gesture.zpos === 0 ) ? true : false;
+  if(isLocked){
+    delayLock = false;
+  }
+  if(!isLocked){
+    if(lockCounter === 2){
+      imageMode = false;
+      toggleImages();
+      lockCounter--;
+      delayLock = true;
+    } else if(!delayLock){
+      lockCounter = lockCounter <= 0 ? 0 : lockCounter - 1;
+    }
+  }
+
+  if(gesture.palmDirection !== 0 && lockCounter !== 2){
     if(gesture.palmDirection === 1){
       if(gesture.normalUp){
-        console.log("bring images");
+        imageMode = true;
+        toggleImages();
+        lockCounter = 2;
       } else{
-      currentZoomLevel = currentZoomLevel < 14 ? 14 : currentZoomLevel - 1;
+        currentZoomLevel = currentZoomLevel < 14 ? 14 : currentZoomLevel - 1;
       }
     } else {
       currentZoomLevel = currentZoomLevel > 20 ? 20 : currentZoomLevel + 1;
@@ -267,7 +288,7 @@ var navigateInstaLeap = function(gesture) {
     map.setZoom(currentZoomLevel);
   }
   if(mapInitialized){
-    if(!isLocked){
+    if(!isLocked && lockCounter === 0){
       map.panBy(gesture.xpos * MAPXVELOCITY, gesture.ypos * MAPYVELOCITY);
     }
   }
