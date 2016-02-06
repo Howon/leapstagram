@@ -162,7 +162,7 @@ Leap.loop({
     }
 
     var swipeMag = (position[0] - 30) / MAXXPOS;
-    if (swipeMag > 0.4) {
+    if (swipeMag < -0.3) {
       gstate.isPalmSwipingLeft = false;
       gstate.numPalmSwipingLeft = 0;
       if (gstate.numPalmSwipingRight++ > SWIPEFRAMERATE) {
@@ -174,7 +174,7 @@ Leap.loop({
           }
         }
       }
-    } else if (swipeMag < -0.4) {
+    } else if (swipeMag > 0.3) {
       gstate.isPalmSwipingRight = false;
       gstate.numPalmSwipingRight = 0;
       if (gstate.numPalmSwipingLeft++ > SWIPEFRAMERATE) {
