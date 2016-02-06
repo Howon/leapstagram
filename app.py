@@ -43,7 +43,7 @@ def login_required(test):
 
 @app.route('/')
 def home():
-    return render_template('pages/placeholder.home.html')
+    return render_template('pages/index.html')
 
 @app.route('/flickr')
 def flickr():
