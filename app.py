@@ -67,6 +67,13 @@ def forgot():
     form = ForgotForm(request.form)
     return render_template('forms/forgot.html', form=form)
 
+@app.route('/testMap')
+def map():
+    return render_template('forms/map.html')
+
+@app.route('/testLeap')
+def leap():
+    return render_template('forms/leap.html')
 # Error handlers.
 
 
