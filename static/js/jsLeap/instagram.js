@@ -1,6 +1,6 @@
 var urls = []
 
-function search_by_geo(lat, lon){
+function search_by_geo(lat, lon, callback){
 
 	var searchURL = "https://api.instagram.com/v1/media/search";
 
@@ -22,7 +22,7 @@ function search_by_geo(lat, lon){
 					urls.push({"image": obj.images.standard_resolution.url,
 							   "source": obj.link});
 				}
-				console.log(urls);
+				populate_carousel(urls);
 			},
 			error: function(jqXHR, textStatus, errorThrown) {
 				showError("ERROR loadGeoLocation: " + textStatus);
