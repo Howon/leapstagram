@@ -71,9 +71,9 @@ def forgot():
 def map():
     return render_template('forms/map.html')
 
-@app.route('/testLeap')
+@app.route('/photo')
 def leap():
-    return render_template('forms/leap.html')
+    return render_template('forms/photos.html')
 # Error handlers.
 
 

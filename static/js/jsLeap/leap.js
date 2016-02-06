@@ -24,7 +24,6 @@ function Gesture(xpos, ypos, zpos, isLocked){
 		if(ypos < -MAXYPOS) ypos = -MAXYPOS;
 		if(zpos < -MAXZPOS) zpos = -MAXZPOS;
 
-
 		this.xpos = xpos/MAXXPOS;
 		this.ypos = ypos/MAXYPOS;
 		this.zpos = zpos/MAXZPOS;
