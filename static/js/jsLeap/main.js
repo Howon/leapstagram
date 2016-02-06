@@ -94,8 +94,9 @@ const MAXZPOS = 300;
 const PALMMOVEFRAMERATE = 4;
 const PALMCOOLDOWN = 40;
 const PALMMOVEVELOCTIY = 500;
+const FISTFRAMERATE = 20;
 
-function Gesture(xpos, ypos, zpos, pdirection, isLocked) {
+function Gesture(xpos, ypos, zpos, pdirection, normalUp, isLocked) {
   if (!isLocked) {
     xpos -= 30;
     ypos += 20;
@@ -106,7 +107,8 @@ function Gesture(xpos, ypos, zpos, pdirection, isLocked) {
     if (ypos < -MAXYPOS) ypos = -MAXYPOS;
     if (zpos < -MAXZPOS) zpos = -MAXZPOS;
 
-    this.palm_direction = 0;
+    this.palmDirection = 0;
+    this.normalUp = false;
     this.xpos = xpos / MAXXPOS;
     this.ypos = ypos / MAXYPOS;
     this.zpos = zpos / MAXZPOS;
@@ -114,7 +116,8 @@ function Gesture(xpos, ypos, zpos, pdirection, isLocked) {
     this.xpos = 0;
     this.ypos = 0;
     this.zpos = 0;
-    this.palm_direction = pdirection;
+    this.palmDirection = pdirection;
+    this.normalUp = normalUp;
   }
 }
 
@@ -171,8 +174,10 @@ Leap.loop({
       palmMoveDirection = 0;
     }
 
+    var normalUp = checkNormal(hand);
+
     if (checkFist(hand)) {
-      if (gstate.numFists++ > 15) {
+      if (gstate.numFists++ > FISTFRAMERATE) {
         if (!gstate.isFisting) {
           gstate.isFisting = true;
           gstate.locked = !gstate.locked;
@@ -186,7 +191,8 @@ Leap.loop({
     if(zero_out_move_direction){
         palmMoveDirection = 0;
     }
-    gesture = new Gesture(position[0], -position[2], position[1], palmMoveDirection, gstate.locked);
+
+    gesture = new Gesture(position[0], -position[2], position[1], palmMoveDirection, normalUp, gstate.locked);
     navigateInstaLeap(gesture);
   } else {
     gstate = new GestureState();
@@ -225,6 +231,10 @@ function checkFist(hand) {
   }
 }
 
+function checkNormal(hand) {
+  return hand.palmNormal[1] > 0;
+}
+
 function checkPalm(hand) {
   var velocity = hand.palmVelocity[1];
   if(velocity > PALMMOVEVELOCTIY){
@@ -238,78 +248,34 @@ function checkPalm(hand) {
 var isLocked = false;
 var instagramLoaded = false;
 
+var currentZoomLevel = zoomLevel;
+
+const MAPXVELOCITY = 100;
+const MAPYVELOCITY = -150;
 
 var navigateInstaLeap = function(gesture) {
-  if(gesture.palm_direction !== 0){
-    if(gesture.palm_direction)
-  }
   var isLocked = (gesture.xpos === 0 ) && (gesture.ypos === 0 ) && (gesture.zpos === 0 ) ? true : false;
+
+  if(gesture.palmDirection !== 0){
+    if(gesture.palmDirection === 1){
+      if(gesture.normalUp){
+        console.log("bring images");
+      } else{
+      currentZoomLevel = currentZoomLevel < 14 ? 14 : currentZoomLevel - 1;
+      }
+    } else {
+      currentZoomLevel = currentZoomLevel > 20 ? 20 : currentZoomLevel + 1;
+    }
+    map.setZoom(currentZoomLevel);
+  }
   if(mapInitialized){
     if(!isLocked){
-      map.panBy(gesture.xpos * 100, gesture.ypos * -150);
+      map.panBy(gesture.xpos * MAPXVELOCITY, gesture.ypos * MAPYVELOCITY);
     }
   }
-
-  // /* Navigation*/
-  // if (key === 'w') {
-  //   /* north*/
-  //   if (isLocked && instagramLoaded) {
-  //     console.log('Image up')
-  //   } else if (!isLocked) {
-  //     map.panBy(0, -10);
-  //   }
-
-  // } else if (key === 'd') {
-  //   /* east*/
-  //   if (isLocked && instagramLoaded) {
-  //     console.log('Image right')
-  //   } else if (!isLocked) {
-  //     map.panBy(10, 0);
-  //   }
-  // } else if (key === 's') {
-  //   /* south*/
-  //   if (isLocked && instagramLoaded) {
-  //     console.log('Image down')
-  //   } else if (!isLocked) {
-  //     map.panBy(0, 10);
-  //   }
-
-  // } else if (key === 'a') {
-  //   /* west*/
-  //   if (isLocked && instagramLoaded) {
-  //     console.log('Image west')
-  //   } else if (!isLocked) {
-  //     map.panBy(-10, 0);
-  //   }
-
-  // } else if (key === 'j' && !isLocked) {
-  //   /* zoom in*/
-  //   map.setZoom(map.getZoom() + 1)
-
-  // } else if (key === 'k' && !isLocked) {
-  //   /* zoom out*/
-  //   map.setZoom(map.getZoom() - 1)
-
-  // } else if (key === 'l') { /* toggle gesture*/
-  //   /* isLocked*/
-  //   isLocked = !isLocked;
-  // } else if (key === 'u' && isLocked) {
-  //   console.log('Instagram call')
-  //   instagramLoaded = !instagramLoaded;
-  // } else if (key === 'i' && isLocked && instagramLoaded) {
-  //   console.log('tap')
-  // }
 };
 
-
-
-// Adds the rigged hand and playback plugins
-// to a given controller, providing a cool demo.
 visualizeHand = function(controller) {
-  // The leap-plugin file included above gives us a number of plugins out of the box
-  // To use a plugins, we call `.use` on the controller with options for the plugin.
-  // See js.leapmotion.com/plugins for more info
-
   controller.use('playback', {
     // This is a compressed JSON file of preprecorded frame data
     recording: 'finger-angle-43fps.json.lz',
@@ -336,4 +302,5 @@ visualizeHand = function(controller) {
   camera.position.set(-8, 8, 20);
   camera.lookAt(new THREE.Vector3(0, 0, 0));
 };
+
 visualizeHand(Leap.loopController);
