@@ -2,11 +2,12 @@
 # Imports
 #----------------------------------------------------------------------------#
 
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 # from flask.ext.sqlalchemy import SQLAlchemy
 import logging
 from logging import Formatter, FileHandler
 from forms import *
+import flickrapi as fapi
 
 #----------------------------------------------------------------------------#
 # App Config.
@@ -44,6 +45,34 @@ def login_required(test):
 def home():
     return render_template('pages/placeholder.home.html')
 
+@app.route('/flickr')
+def flickr():
+    print request.args
+    flickr = fapi.FlickrAPI(
+                   "fadfc84cb4e9c93a7d6d06c54a170d6a",
+                   "3827e3911a15707e",
+                   None,
+                   False)
+
+    search = flickr.walk(
+        lat = request.args.get("lat"),
+        lon = request.args.get("lon"))
+
+    urls = []
+
+    for i in range(1, 20):
+        pic = search.next()
+
+        url = "https://farm{farm}.staticflickr.com/{sid}/{pid}_{secret}.jpg".format(
+                farm = pic.get("farm"),
+                sid = pic.get("server"),
+                pid = pic.get("id"),
+                secret = pic.get("secret"))
+
+        urls.append(url)
+
+    return jsonify(pics=urls)
+
 
 @app.route('/about')
 def about():
@@ -76,6 +105,9 @@ def leap():
     return render_template('forms/leap.html')
 # Error handlers.
 
+@app.route('/testc')
+def carousel():
+    return render_template('forms/carousel.html')
 
 @app.errorhandler(500)
 def internal_error(error):
