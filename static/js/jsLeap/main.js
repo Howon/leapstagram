@@ -246,8 +246,6 @@ function checkPalm(hand) {
 }
 
 var isLocked = false;
-var instagramLoaded = false;
-
 var currentZoomLevel = zoomLevel;
 
 const MAPXVELOCITY = 100;

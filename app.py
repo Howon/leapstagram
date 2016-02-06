@@ -42,45 +42,7 @@ def login_required(test):
 
 @app.route('/')
 def home():
-    return render_template('pages/placeholder.home.html')
-
-
-@app.route('/about')
-def about():
-    return render_template('pages/placeholder.about.html')
-
-
-@app.route('/login')
-def login():
-    form = LoginForm(request.form)
-    return render_template('forms/login.html', form=form)
-
-
-@app.route('/register')
-def register():
-    form = RegisterForm(request.form)
-    return render_template('forms/register.html', form=form)
-
-
-@app.route('/forgot')
-def forgot():
-    form = ForgotForm(request.form)
-    return render_template('forms/forgot.html', form=form)
-
-@app.route('/testMap')
-def map():
-    return render_template('forms/map.html')
-
-@app.route('/photo')
-def leap():
-    return render_template('forms/photos.html')
-# Error handlers.
-
-@app.route('/testPhoto')
-def test():
-    return render_template('forms/index.html')
-# Error handlers.
-
+    return render_template('pages/index.html')
 
 @app.errorhandler(500)
 def internal_error(error):
