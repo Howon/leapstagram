@@ -191,7 +191,7 @@ Leap.loop({
     }
 
     gesture = new Gesture(position[0], -position[2], position[1], palmMoveDirection, normalUp, gstate.locked);
-    navigateInstaLeap(gesture);
+    navigateLeapstaGram(gesture);
   } else {
     gstate = new GestureState();
   }
@@ -255,9 +255,14 @@ const MAPYVELOCITY = -150;
 
 var toggleImages = function() {
   document.getElementById("shader").style.display = imageMode ? "block" : "none";
+  if(imageMode){
+    var currentLat = map.getCenter().lat;
+    var currentLat = map.getCenter().lat;
+    search_by_geo(currentLat, currentLon);
+  }
 }
 
-var navigateInstaLeap = function(gesture) {
+var navigateLeapstaGram = function(gesture) {
   isLocked = (gesture.xpos === 0 ) && (gesture.ypos === 0 ) && (gesture.zpos === 0 ) ? true : false;
   if(isLocked){
     delayLock = false;
@@ -294,10 +299,67 @@ var navigateInstaLeap = function(gesture) {
   }
 };
 
+/* Image Query */
+/*************************************************/
+/*************************************************/
+/*************************************************/
+
+var urls = []
+
+function search_by_geo(lat, lon) {
+  var searchURL = "https://api.instagram.com/v1/media/search";
+  $.ajax({
+    url: searchURL,
+    type: "GET",
+    dataType: "jsonp",
+    cache: false,
+    data: {
+      client_id: "22aaafad8e8447cf883c2cbb55663de5",
+      lat: lat,
+      lng: lon,
+      distance: 10
+    },
+    success: function(data) {
+      urls = [];
+      for (var i = 0; i < data.data.length; i++) {
+        var obj = data.data[i];
+        urls.push({
+          "image": obj.images.standard_resolution.url,
+          "source": obj.link
+        });
+      }
+      populate_carousel(urls);
+    },
+    error: function(jqXHR, textStatus, errorThrown) {
+      showError("ERROR loadGeoLocation: " + textStatus);
+    }
+  });
+}
+
+search_by_geo(currentLat, currentLon);
+
+function populate_carousel() {
+  for (var i = 0; i < urls.length; i++) {
+    $('<div class="item">' +
+        '<img src="' +
+          urls[i].image +
+        '">' +
+        '<div class="carousel-caption">' +
+        '</div>' +
+      '</div>').appendTo('.carousel-inner');
+    $('<li data-target="#myCarousel" data-slide-to="'+ i +'"></li>').appendTo('.carousel-indicators')
+  }
+  $('.item').first().addClass('active');
+  $('.carousel-indicators > li').first().addClass('active');
+  $('#myCarousel').carousel();
+}
+
+/*************************************************/
+/*************************************************/
+/*************************************************/
+
 visualizeHand = function(controller) {
   controller.use('playback', {
-    // This is a compressed JSON file of preprecorded frame data
-    recording: 'finger-angle-43fps.json.lz',
     // How long, in ms, between repeating the recording.
     timeBetweenLoops: 1000,
     pauseOnHand: true

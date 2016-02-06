@@ -8,6 +8,9 @@
     <script type="text/javascript" src="https://js.leapmotion.com/leap-plugins-0.1.8.js"></script>
     <script type="text/javascript" src="https://js.leapmotion.com/leap.rigged-hand-0.1.4.min.js"></script>
     <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+
     <style>
       html, body {
         height: 100%;
@@ -59,21 +62,7 @@
         font-size: 13px;
         font-weight: 300;
       }
-    </style>
-    <title>Places Searchbox</title>
-    <style>
-      #target {
-        width: 345px;
-      }
-    </style>
-  </head>
-  <body>
-    <input id="pac-input" class="controls" type="text" placeholder="Search Box">
-    <div id="shader"></div>
-    <div id="map"></div>
-    <script src="static/js/jsLeap/main.js"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBqOR0tUlQ0onUvvQdOEi_Arx6RiYGEASM&libraries=places&callback=initMap" async defer></script>
-    <style>
+
       canvas{
         z-index:-1;
       }
@@ -90,8 +79,42 @@
         position: fixed;
         background-color: #EFEFEF;
         opacity: 0.8;
-        display: none;
+        /*display: none;*/
+      }
+
+      #myCarousel,
+      .carousel-inner,
+      .item{
+        height:100%;
       }
     </style>
+    <title>Places Searchbox</title>
+  </head>
+  <body>
+    <input id="pac-input" class="controls" type="text" placeholder="Search Box">
+    <div id="shader">
+      <div id="myCarousel" class="carousel slide" data-ride="carousel">
+        <!-- Indicators -->
+        <ol class="carousel-indicators">
+        </ol>
+
+        <!-- Wrapper for slides -->
+        <div class="carousel-inner" role="listbox">
+        </div>
+
+        <!-- Left and right controls -->
+        <a class="left carousel-control" href="#myCarousel" role="button" data-slide="prev">
+          <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
+          <span class="sr-only">Previous</span>
+        </a>
+        <a class="right carousel-control" href="#myCarousel" role="button" data-slide="next">
+          <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+          <span class="sr-only">Next</span>
+        </a>
+      </div>
+    </div>
+    <div id="map"></div>
+    <script src="static/js/jsLeap/main.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBqOR0tUlQ0onUvvQdOEi_Arx6RiYGEASM&libraries=places&callback=initMap" async defer></script>
   </body>
 </html>

@@ -43,7 +43,7 @@ def login_required(test):
 
 @app.route('/')
 def home():
-    return render_template('pages/placeholder.home.html')
+    return render_template('pages/index.html')
 
 @app.route('/flickr')
 def flickr():
@@ -89,7 +89,6 @@ def login():
 def register():
     form = RegisterForm(request.form)
     return render_template('forms/register.html', form=form)
-
 
 @app.route('/forgot')
 def forgot():
