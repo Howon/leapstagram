@@ -1,18 +1,21 @@
 var map,
+  mapInitialized = false,
+  zoomLevel = 17,
   columbiaLat = 40.8093675,
   columbiaLon = -73.9613624,
   currentLat = columbiaLat,
   currentLon = columbiaLon;
 
 function initMap() {
-  var map = new google.maps.Map(document.getElementById('map'), {
+  map = new google.maps.Map(document.getElementById('map'), {
     center: {
       lat: columbiaLat,
       lng: columbiaLon
     },
-    zoom: 17,
+    zoom: zoomLevel,
     mapTypeId: google.maps.MapTypeId.SATELLITE
   });
+  mapInitialized = true;
 
   // Create the search box and link it to the UI element.
   var input = document.getElementById('pac-input');
@@ -78,13 +81,22 @@ function GestureState() {
   this.openHand = 0;
   this.isFisting = false;
   this.locked = true;
+  this.numPalmMovingUp = 0;
+  this.numPalmMovingDown = 0;
+  this.isPalmMovingUp = false;
+  this.isPalmMovingDown = false;
+  this.palmCoolDown = 0;
 }
 
 const MAXXPOS = 225;
 const MAXYPOS = 185;
 const MAXZPOS = 300;
+const PALMMOVEFRAMERATE = 4;
+const PALMCOOLDOWN = 40;
+const PALMMOVEVELOCTIY = 500;
+const FISTFRAMERATE = 20;
 
-function Gesture(xpos, ypos, zpos, isLocked) {
+function Gesture(xpos, ypos, zpos, pdirection, normalUp, isLocked) {
   if (!isLocked) {
     xpos -= 30;
     ypos += 20;
@@ -95,7 +107,8 @@ function Gesture(xpos, ypos, zpos, isLocked) {
     if (ypos < -MAXYPOS) ypos = -MAXYPOS;
     if (zpos < -MAXZPOS) zpos = -MAXZPOS;
 
-
+    this.palmDirection = 0;
+    this.normalUp = false;
     this.xpos = xpos / MAXXPOS;
     this.ypos = ypos / MAXYPOS;
     this.zpos = zpos / MAXZPOS;
@@ -103,14 +116,16 @@ function Gesture(xpos, ypos, zpos, isLocked) {
     this.xpos = 0;
     this.ypos = 0;
     this.zpos = 0;
+    this.palmDirection = pdirection;
+    this.normalUp = normalUp;
   }
 }
 
 var gstate = new GestureState();
 
-// Set up the controller:
 Leap.loop({
-  background: true
+  background: true,
+  enableGestures: true
 }, function(frame) {
   if (frame.hands.length > 0) {
     var hand = frame.hands[0];
@@ -118,8 +133,51 @@ Leap.loop({
     var velocity = hand.palmVelocity;
     var direction = hand.direction;
     var locked = false;
+
+    var gesture;
+    var palmMove = checkPalm(hand);
+    var palmMoveDirection = 0;
+    var zero_out_move_direction = false;
+    if(gstate.palmCoolDown !== 0){
+      zero_out_move_direction = true;
+      gstate.palmCoolDown--;
+    }
+    if(palmMove === 1){
+      gstate.isPalmMovingDown = false;
+      gstate.numPalmMovingDown = 0;
+      if(gstate.numPalmMovingUp++ > PALMMOVEFRAMERATE){
+        if(!gstate.isPalmMovingUp){
+          gstate.isPalmMovingUp = true;
+          palmMoveDirection = 1;
+          if(gstate.palmCoolDown == 0){
+            gstate.palmCoolDown = PALMCOOLDOWN;
+          }
+        }
+      }
+    } else if(palmMove === -1) {
+      gstate.isPalmMovingUp = false;
+      gstate.numPalmMovingUp = 0;
+      if(gstate.numPalmMovingDown++ > PALMMOVEFRAMERATE){
+        if(!gstate.isPalmMovingDown){
+          gstate.isPalmMovingDown = true;
+          palmMoveDirection = -1;
+          if(gstate.palmCoolDown == 0){
+            gstate.palmCoolDown = PALMCOOLDOWN;
+          }
+        }
+      }
+    } else {
+      gstate.isPalmMovingDown = false;
+      gstate.isPalmMovingUp = false;
+      gstate.numPalmMovingDown = 0;
+      gstate.numPalmMovingUp = 0;
+      palmMoveDirection = 0;
+    }
+
+    var normalUp = checkNormal(hand);
+
     if (checkFist(hand)) {
-      if (gstate.numFists++ > 15) {
+      if (gstate.numFists++ > FISTFRAMERATE) {
         if (!gstate.isFisting) {
           gstate.isFisting = true;
           gstate.locked = !gstate.locked;
@@ -130,7 +188,11 @@ Leap.loop({
       gstate.isFisting = false;
     }
 
-    var gesture = new Gesture(position[0], -position[2], position[1], gstate.locked);
+    if(zero_out_move_direction){
+        palmMoveDirection = 0;
+    }
+
+    gesture = new Gesture(position[0], -position[2], position[1], palmMoveDirection, normalUp, gstate.locked);
     navigateInstaLeap(gesture);
   } else {
     gstate = new GestureState();
@@ -169,73 +231,49 @@ function checkFist(hand) {
   }
 }
 
+function checkNormal(hand) {
+  return hand.palmNormal[1] > 0;
+}
+
+function checkPalm(hand) {
+  var velocity = hand.palmVelocity[1];
+  if(velocity > PALMMOVEVELOCTIY){
+    return 1;
+  } else if(velocity < -PALMMOVEVELOCTIY){
+    return -1;
+  }
+  return 0;
+}
+
 var isLocked = false;
-var instagramLoaded = false;
+var currentZoomLevel = zoomLevel;
+
+const MAPXVELOCITY = 100;
+const MAPYVELOCITY = -150;
 
 var navigateInstaLeap = function(gesture) {
-  console.log(gesture)
-  console.log(gesture)
+  var isLocked = (gesture.xpos === 0 ) && (gesture.ypos === 0 ) && (gesture.zpos === 0 ) ? true : false;
 
-  // /* Navigation*/
-  // if (key === 'w') {
-  //   /* north*/
-  //   if (isLocked && instagramLoaded) {
-  //     console.log('Image up')
-  //   } else if (!isLocked) {
-  //     map.panBy(0, -10);
-  //   }
-
-  // } else if (key === 'd') {
-  //   /* east*/
-  //   if (isLocked && instagramLoaded) {
-  //     console.log('Image right')
-  //   } else if (!isLocked) {
-  //     map.panBy(10, 0);
-  //   }
-  // } else if (key === 's') {
-  //   /* south*/
-  //   if (isLocked && instagramLoaded) {
-  //     console.log('Image down')
-  //   } else if (!isLocked) {
-  //     map.panBy(0, 10);
-  //   }
-
-  // } else if (key === 'a') {
-  //   /* west*/
-  //   if (isLocked && instagramLoaded) {
-  //     console.log('Image west')
-  //   } else if (!isLocked) {
-  //     map.panBy(-10, 0);
-  //   }
-
-  // } else if (key === 'j' && !isLocked) {
-  //   /* zoom in*/
-  //   map.setZoom(map.getZoom() + 1)
-
-  // } else if (key === 'k' && !isLocked) {
-  //   /* zoom out*/
-  //   map.setZoom(map.getZoom() - 1)
-
-  // } else if (key === 'l') { /* toggle gesture*/
-  //   /* isLocked*/
-  //   isLocked = !isLocked;
-  // } else if (key === 'u' && isLocked) {
-  //   console.log('Instagram call')
-  //   instagramLoaded = !instagramLoaded;
-  // } else if (key === 'i' && isLocked && instagramLoaded) {
-  //   console.log('tap')
-  // }
+  if(gesture.palmDirection !== 0){
+    if(gesture.palmDirection === 1){
+      if(gesture.normalUp){
+        console.log("bring images");
+      } else{
+      currentZoomLevel = currentZoomLevel < 14 ? 14 : currentZoomLevel - 1;
+      }
+    } else {
+      currentZoomLevel = currentZoomLevel > 20 ? 20 : currentZoomLevel + 1;
+    }
+    map.setZoom(currentZoomLevel);
+  }
+  if(mapInitialized){
+    if(!isLocked){
+      map.panBy(gesture.xpos * MAPXVELOCITY, gesture.ypos * MAPYVELOCITY);
+    }
+  }
 };
 
-
-
-// Adds the rigged hand and playback plugins
-// to a given controller, providing a cool demo.
 visualizeHand = function(controller) {
-  // The leap-plugin file included above gives us a number of plugins out of the box
-  // To use a plugins, we call `.use` on the controller with options for the plugin.
-  // See js.leapmotion.com/plugins for more info
-
   controller.use('playback', {
     // This is a compressed JSON file of preprecorded frame data
     recording: 'finger-angle-43fps.json.lz',
@@ -262,4 +300,5 @@ visualizeHand = function(controller) {
   camera.position.set(-8, 8, 20);
   camera.lookAt(new THREE.Vector3(0, 0, 0));
 };
+
 visualizeHand(Leap.loopController);
