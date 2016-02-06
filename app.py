@@ -76,6 +76,11 @@ def leap():
     return render_template('forms/photos.html')
 # Error handlers.
 
+@app.route('/testPhoto')
+def test():
+    return render_template('forms/index.html')
+# Error handlers.
+
 
 @app.errorhandler(500)
 def internal_error(error):
