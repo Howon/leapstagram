@@ -5,11 +5,20 @@ var map,
   currentLon = columbiaLon;
 
 function initMap() {
-  var map = new google.maps.Map(document.getElementById('map'), {
-    center: {lat: columbiaLat, lng: columbiaLon},
+  map = new google.maps.Map(document.getElementById('map'), {
+    center: {
+      lat: columbiaLat,
+      lng: columbiaLon
+    },
     zoom: 17,
     mapTypeId: google.maps.MapTypeId.SATELLITE
   });
+
+  panorama = map.getStreetView();
+  panorama.setPov( /** @type {google.maps.StreetViewPov} */ ({
+    heading: 0,
+    pitch: 0
+  }));
 
   // Create the search box and link it to the UI element.
   var input = document.getElementById('pac-input');
@@ -72,61 +81,77 @@ function initMap() {
 var isLocked = false;
 var instagramLoaded = false;
 document.onkeypress = function(e) {
-    e = e || window.event;
-    var charCode = (typeof e.which == "number") ? e.which : e.keyCode;
-    // if (charCode) {
-    //     alert("Character typed: " + String.fromCharCode(charCode));
-    // }
-    key = String.fromCharCode(charCode)
-    console.log(key)
+  e = e || window.event;
+  var charCode = (typeof e.which == "number") ? e.which : e.keyCode;
+  // if (charCode) {
+  //     alert("Character typed: " + String.fromCharCode(charCode));
+  // }
+  key = String.fromCharCode(charCode)
+  console.log(key)
 
+  console.log(map)
     /* Navigation*/
-    if (key === 'w') {
-        /* north*/
-        if (isLocked && instagramLoaded) {
-            console.log('Image up')
-        } else if (!isLocked) {
-            map.panBy(0, -10);
-        }
+  if (panorama.getVisible()) {
+    panorama.setPov( /** @type {google.maps.StreetViewPov} */ ({
+      heading: 0, /* gesture.xpost */
+      pitch: 0 /* gesture.ypos */
+    }));
+  }
 
-    } else if (key === 'd') {
-        /* east*/
-        if (isLocked && instagramLoaded) {
-            console.log('Image right')
-        } else if (!isLocked) {
-            map.panBy(10, 0);
-        }
-    } else if (key === 's') {
-        /* south*/
-        if (isLocked && instagramLoaded) {
-            console.log('Image down')
-        } else if (!isLocked) {
-            map.panBy(0, 10);
-        }
-
-    } else if (key === 'a') {
-        /* west*/
-        if (isLocked && instagramLoaded) {
-            console.log('Image west')
-        } else if (!isLocked) {
-            map.panBy(-10, 0);
-        }
-
-    } else if (key === 'j' && !isLocked) {
-        /* zoom in*/
-        map.setZoom(map.getZoom() + 1)
-
-    } else if (key === 'k' && !isLocked) {
-        /* zoom out*/
-        map.setZoom(map.getZoom() - 1)
-
-    } else if (key === 'l') { /* toggle gesture*/
-        /* isLocked*/
-        isLocked = !isLocked;
-    } else if (key === 'u' && isLocked) {
-        console.log('Instagram call')
-        instagramLoaded = !instagramLoaded;
-    } else if (key === 'i' && isLocked && instagramLoaded) {
-        console.log('tap')
+  if (key === 'w') {
+    /* north*/
+    if (isLocked && instagramLoaded) {
+      console.log('Image up')
+    } else if (!isLocked) {
+      map.panBy(0, -10);
     }
+
+  } else if (key === 'd') {
+    /* east*/
+    if (isLocked && instagramLoaded) {
+      console.log('Image right')
+    } else if (!isLocked) {
+      map.panBy(10, 0);
+    }
+  } else if (key === 's') {
+    /* south*/
+    if (isLocked && instagramLoaded) {
+      console.log('Image down')
+    } else if (!isLocked) {
+      map.panBy(0, 10);
+    }
+
+  } else if (key === 'a') {
+    /* west*/
+    if (isLocked && instagramLoaded) {
+      console.log('Image west')
+    } else if (!isLocked) {
+      map.panBy(-10, 0);
+    }
+
+  } else if (key === 'j' && !isLocked) {
+    /* zoom in*/
+    map.setZoom(map.getZoom() + 1)
+
+  } else if (key === 'k' && !isLocked) {
+    /* zoom out*/
+    map.setZoom(map.getZoom() - 1)
+
+  } else if (key === 'l') { /* toggle gesture*/
+    /* isLocked*/
+    isLocked = !isLocked;
+  } else if (key === 'u' && isLocked) {
+    console.log('Instagram call')
+    instagramLoaded = !instagramLoaded;
+  } else if (key === 'i' && isLocked && instagramLoaded) {
+    console.log('tap')
+  } else if (key === 't') {
+    panorama.setPosition(map.getCenter());
+    var toggle = panorama.getVisible();
+    if (toggle == false) {
+      panorama.setVisible(true);
+    } else {
+      panorama.setVisible(false);
+    }
+  }
 };
