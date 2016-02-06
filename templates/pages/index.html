@@ -63,8 +63,15 @@
         font-weight: 300;
       }
 
-      canvas{
-        z-index:-1;
+      #searchClick{
+        z-index:40;
+        background-color:transparent;
+        left:10px;
+        top: 10px;
+        width:305px;
+        height:35px;
+        position:absolute;
+        cursor:text;
       }
 
       #map{
@@ -79,7 +86,7 @@
         position: fixed;
         background-color: #EFEFEF;
         opacity: 0.8;
-        /*display: none;*/
+        display: none;
       }
 
       #myCarousel,
@@ -92,27 +99,8 @@
   </head>
   <body>
     <input id="pac-input" class="controls" type="text" placeholder="Search Box">
-    <div id="shader">
-      <div id="myCarousel" class="carousel slide" data-ride="carousel">
-        <!-- Indicators -->
-        <ol class="carousel-indicators">
-        </ol>
-
-        <!-- Wrapper for slides -->
-        <div class="carousel-inner" role="listbox">
-        </div>
-
-        <!-- Left and right controls -->
-        <a class="left carousel-control" href="#myCarousel" role="button" data-slide="prev">
-          <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
-          <span class="sr-only">Previous</span>
-        </a>
-        <a class="right carousel-control" href="#myCarousel" role="button" data-slide="next">
-          <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
-          <span class="sr-only">Next</span>
-        </a>
-      </div>
-    </div>
+    <div id="shader"></div>
+    <div id="searchClick"></div>
     <div id="map"></div>
     <script src="static/js/jsLeap/main.js"></script>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBqOR0tUlQ0onUvvQdOEi_Arx6RiYGEASM&libraries=places&callback=initMap" async defer></script>

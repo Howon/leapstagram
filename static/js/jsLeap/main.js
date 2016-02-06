@@ -2,9 +2,9 @@ var map,
   mapInitialized = false,
   zoomLevel = 17,
   columbiaLat = 40.8093675,
-  columbiaLon = -73.9613624,
-  currentLat = columbiaLat,
-  currentLon = columbiaLon;
+  columbiaLon = -73.9613624;
+
+const INSTAGRAMCLIENTID = "22aaafad8e8447cf883c2cbb55663de5";
 
 function initMap() {
   map = new google.maps.Map(document.getElementById('map'), {
@@ -71,6 +71,10 @@ function initMap() {
   });
 }
 
+$('#searchClick').click(function(){
+    $('#pac-input').focus();
+});
+
 const minValue = 1;
 
 function GestureState() {
@@ -82,18 +86,25 @@ function GestureState() {
   this.numPalmMovingDown = 0;
   this.isPalmMovingUp = false;
   this.isPalmMovingDown = false;
+  this.numPalmSwipingRight = 0;
+  this.numPalmSwipingLeft = 0;
+  this.isPalmSwipingRight = false;
+  this.isPalmSwipingLeft = false;
+  this.palmSwipeCoolDown = 0;
   this.palmCoolDown = 0;
 }
 
 const MAXXPOS = 400;
 const MAXYPOS = 500;
-const MAXZPOS = 350;
+const MAXZPOS = 750;
 const PALMMOVEFRAMERATE = 4;
+const SWIPEFRAMERATE = 1;
 const PALMCOOLDOWN = 40;
+const SWIPECOOLDOWN = 15;
 const PALMMOVEVELOCTIY = 500;
 const LOCKFRAMERATE = 20;
 
-function Gesture(xpos, ypos, zpos, pdirection, normalUp, isLocked) {
+function Gesture(xpos, ypos, zpos, pdirection, sdirection, normalUp, isLocked, swipeDir) {
   if (!isLocked) {
     xpos -= 30;
     ypos += 20;
@@ -117,6 +128,7 @@ function Gesture(xpos, ypos, zpos, pdirection, normalUp, isLocked) {
     this.normalUp = normalUp;
   }
   this.locked = isLocked;
+  this.swipeDirection = sdirection;
 }
 
 var gstate = new GestureState();
@@ -125,6 +137,7 @@ Leap.loop({
   background: true,
   enableGestures: true
 }, function(frame) {
+
   if (frame.hands.length > 0) {
     var hand = frame.hands[0];
     var position = hand.palmPosition;
@@ -135,31 +148,73 @@ Leap.loop({
     var gesture;
     var palmMove = checkPalm(hand);
     var palmMoveDirection = 0;
+    var swipeDirection = 0;
     var zero_out_move_direction = false;
-    if(gstate.palmCoolDown !== 0){
+    if (gstate.palmCoolDown !== 0) {
       zero_out_move_direction = true;
       gstate.palmCoolDown--;
     }
-    if(palmMove === 1){
+
+    var zero_out_swipes = false;
+    if (gstate.palmSwipeCoolDown !== 0) {
+      zero_out_swipes = true;
+      gstate.palmSwipeCoolDown--;
+    }
+
+    var swipiness = (position[0] - 30) / MAXXPOS;
+    if (swipiness > 0.4) {
+      gstate.isPalmSwipingLeft = false;
+      gstate.numPalmSwipingLeft = 0;
+      if (gstate.numPalmSwipingRight++ > SWIPEFRAMERATE) {
+        if (!gstate.isPalmSwipingRight) {
+          gstate.isPalmSwipingRight = true;
+          swipeDirection = 1;
+          if (gstate.palmSwipeCoolDown == 0) {
+            gstate.palmSwipeCoolDown = SWIPECOOLDOWN;
+          }
+        }
+      }
+    } else if (swipiness < -0.4) {
+      gstate.isPalmSwipingRight = false;
+      gstate.numPalmSwipingRight = 0;
+      if (gstate.numPalmSwipingLeft++ > SWIPEFRAMERATE) {
+        if (!gstate.isPalmSwipingLeft) {
+          gstate.isPalmSwipingLeft = true;
+          swipeDirection = -1;
+          if (gstate.palmSwipeCoolDown == 0) {
+            gstate.palmSwipeCoolDown = SWIPECOOLDOWN;
+          }
+        }
+      }
+    } else { //vertical
+      gstate.isPalmSwipingLeft = false;
+      gstate.isPalmSwipingRight = false;
+      gstate.numPalmSwipingLeft = 0;
+      gstate.numPalmSwipingRight = 0;
+      swipeDirection = 0;
+    }
+
+
+    if (palmMove === 1) {
       gstate.isPalmMovingDown = false;
       gstate.numPalmMovingDown = 0;
-      if(gstate.numPalmMovingUp++ > PALMMOVEFRAMERATE){
-        if(!gstate.isPalmMovingUp){
+      if (gstate.numPalmMovingUp++ > PALMMOVEFRAMERATE) {
+        if (!gstate.isPalmMovingUp) {
           gstate.isPalmMovingUp = true;
           palmMoveDirection = 1;
-          if(gstate.palmCoolDown == 0){
+          if (gstate.palmCoolDown == 0) {
             gstate.palmCoolDown = PALMCOOLDOWN;
           }
         }
       }
-    } else if(palmMove === -1) {
+    } else if (palmMove === -1) {
       gstate.isPalmMovingUp = false;
       gstate.numPalmMovingUp = 0;
-      if(gstate.numPalmMovingDown++ > PALMMOVEFRAMERATE){
-        if(!gstate.isPalmMovingDown){
+      if (gstate.numPalmMovingDown++ > PALMMOVEFRAMERATE) {
+        if (!gstate.isPalmMovingDown) {
           gstate.isPalmMovingDown = true;
           palmMoveDirection = -1;
-          if(gstate.palmCoolDown == 0){
+          if (gstate.palmCoolDown == 0) {
             gstate.palmCoolDown = PALMCOOLDOWN;
           }
         }
@@ -186,11 +241,14 @@ Leap.loop({
       gstate.isFisting = false;
     }
 
-    if(zero_out_move_direction){
-        palmMoveDirection = 0;
+    if (zero_out_move_direction) {
+      palmMoveDirection = 0;
+    }
+    if (zero_out_swipes) {
+      swipeDirection = 0;
     }
 
-    gesture = new Gesture(position[0], -position[2], position[1], palmMoveDirection, normalUp, gstate.locked);
+    gesture = new Gesture(position[0], -position[2], position[1], palmMoveDirection, swipeDirection, normalUp, gstate.locked);
     navigateLeapstaGram(gesture);
   } else {
     gstate = new GestureState();
@@ -235,9 +293,9 @@ function checkNormal(hand) {
 
 function checkPalm(hand) {
   var velocity = hand.palmVelocity[1];
-  if(velocity > PALMMOVEVELOCTIY){
+  if (velocity > PALMMOVEVELOCTIY) {
     return 1;
-  } else if(velocity < -PALMMOVEVELOCTIY){
+  } else if (velocity < -PALMMOVEVELOCTIY) {
     return -1;
   }
   return 0;
@@ -255,36 +313,53 @@ const MAPYVELOCITY = -150;
 
 var toggleImages = function() {
   document.getElementById("shader").style.display = imageMode ? "block" : "none";
-  if(imageMode){
-    var currentLat = map.getCenter().lat;
-    var currentLat = map.getCenter().lat;
-    search_by_geo(currentLat, currentLon);
+  if (imageMode) {
+    var currentLat = map.getCenter().lat();
+    var currentLon = map.getCenter().lng();
+    search_by_geo(currentLat, currentLon, 33 - currentZoomLevel);
+  } else {
+    removeCarousel();
+  }
+}
+
+var removeCarousel = function() {
+  var carousel = document.getElementById('myCarousel');
+  while (carousel.firstChild) {
+    carousel.removeChild(carousel.firstChild);
   }
 }
 
 var navigateLeapstaGram = function(gesture) {
-  isLocked = (gesture.xpos === 0 ) && (gesture.ypos === 0 ) && (gesture.zpos === 0 ) ? true : false;
-  if(isLocked){
+  var isLocked = (gesture.xpos === 0) && (gesture.ypos === 0) && (gesture.zpos === 0) ? true : false;
+  if (isLocked) {
     delayLock = false;
   }
-  if(!isLocked){
-    if(lockCounter === 2){
+  if (imageMode) {
+    if (gesture.swipeDirection == 1) {
+      $('a.carousel-control.right').trigger('click')
+    } else if (gesture.swipeDirection == -1) {
+      $('a.carousel-control.left').trigger('click')
+
+    }
+  }
+  if (!isLocked) {
+    if (lockCounter === 2) {
       imageMode = false;
       toggleImages();
-      lockCounter--;
+      lockCounter = 0;
       delayLock = true;
-    } else if(!delayLock){
+    } else if (!delayLock) {
       lockCounter = lockCounter <= 0 ? 0 : lockCounter - 1;
     }
   }
 
-  if(gesture.palmDirection !== 0 && lockCounter !== 2){
-    if(gesture.palmDirection === 1){
-      if(gesture.normalUp){
+  if (gesture.palmDirection !== 0 && lockCounter !== 2) {
+    if (gesture.palmDirection === 1) {
+      if (gesture.normalUp) {
         imageMode = true;
         toggleImages();
         lockCounter = 2;
-      } else{
+      } else {
         currentZoomLevel = currentZoomLevel < 14 ? 14 : currentZoomLevel - 1;
       }
     } else {
@@ -292,8 +367,8 @@ var navigateLeapstaGram = function(gesture) {
     }
     map.setZoom(currentZoomLevel);
   }
-  if(mapInitialized){
-    if(!isLocked && lockCounter === 0){
+  if (mapInitialized) {
+    if (!isLocked && lockCounter === 0) {
       map.panBy(gesture.xpos * MAPXVELOCITY, gesture.ypos * MAPYVELOCITY);
     }
   }
@@ -306,7 +381,7 @@ var navigateLeapstaGram = function(gesture) {
 
 var urls = []
 
-function search_by_geo(lat, lon) {
+function search_by_geo(lat, lon, zoom) {
   var searchURL = "https://api.instagram.com/v1/media/search";
   $.ajax({
     url: searchURL,
@@ -314,10 +389,10 @@ function search_by_geo(lat, lon) {
     dataType: "jsonp",
     cache: false,
     data: {
-      client_id: "22aaafad8e8447cf883c2cbb55663de5",
+      client_id: INSTAGRAMCLIENTID,
       lat: lat,
       lng: lon,
-      distance: 10
+      distance: zoom
     },
     success: function(data) {
       urls = [];
@@ -336,18 +411,30 @@ function search_by_geo(lat, lon) {
   });
 }
 
-search_by_geo(currentLat, currentLon);
-
 function populate_carousel() {
+  document.getElementById('shader').innerHTML = (
+    '<div id="myCarousel" class="carousel slide" data-interval="false" data-ride="carousel">' +
+    '<ol id="carousel-indicators" class="carousel-indicators"></ol>' +
+    '<div id="carousel-inner" class="carousel-inner" role="listbox"></div>' +
+    '<a class="left carousel-control" href="#myCarousel" role="button" data-slide="prev">' +
+    '<span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>' +
+    '<span class="sr-only">Previous</span>' +
+    '</a>' +
+    '<a class="right carousel-control" href="#myCarousel" role="button" data-slide="next">' +
+    '<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>' +
+    '<span class="sr-only">Next</span>' +
+    '</a>' +
+    '</div>'
+  )
   for (var i = 0; i < urls.length; i++) {
     $('<div class="item">' +
-        '<img src="' +
-          urls[i].image +
-        '">' +
-        '<div class="carousel-caption">' +
-        '</div>' +
+      '<img class="img-responsive center-block" src="' +
+      urls[i].image +
+      '">' +
+      '<div class="carousel-caption">' +
+      '</div>' +
       '</div>').appendTo('.carousel-inner');
-    $('<li data-target="#myCarousel" data-slide-to="'+ i +'"></li>').appendTo('.carousel-indicators')
+    $('<li data-target="#myCarousel" data-slide-to="' + i + '"></li>').appendTo('.carousel-indicators')
   }
   $('.item').first().addClass('active');
   $('.carousel-indicators > li').first().addClass('active');
@@ -360,11 +447,10 @@ function populate_carousel() {
 
 visualizeHand = function(controller) {
   controller.use('playback', {
-    // How long, in ms, between repeating the recording.
     timeBetweenLoops: 1000,
     pauseOnHand: true
   }).on('riggedHand.meshAdded', function(handMesh, leapHand) {
-    handMesh.material.opacity = 1;
+    handMesh.material.opacity = 0.9;
   });
 
   var overlay = controller.plugins.playback.player.overlay;
