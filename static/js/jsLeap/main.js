@@ -161,8 +161,8 @@ Leap.loop({
       gstate.palmSwipeCoolDown--;
     }
 
-    var swipiness = (position[0] - 30) / MAXXPOS;
-    if (swipiness > 0.4) {
+    var swipeMag = (position[0] - 30) / MAXXPOS;
+    if (swipeMag > 0.4) {
       gstate.isPalmSwipingLeft = false;
       gstate.numPalmSwipingLeft = 0;
       if (gstate.numPalmSwipingRight++ > SWIPEFRAMERATE) {
@@ -174,7 +174,7 @@ Leap.loop({
           }
         }
       }
-    } else if (swipiness < -0.4) {
+    } else if (swipeMag < -0.4) {
       gstate.isPalmSwipingRight = false;
       gstate.numPalmSwipingRight = 0;
       if (gstate.numPalmSwipingLeft++ > SWIPEFRAMERATE) {
@@ -360,7 +360,7 @@ var navigateLeapstaGram = function(gesture) {
         toggleImages();
         lockCounter = 2;
       } else {
-        currentZoomLevel = currentZoomLevel < 14 ? 14 : currentZoomLevel - 1;
+        currentZoomLevel = currentZoomLevel < 1 ? 1 : currentZoomLevel - 1;
       }
     } else {
       currentZoomLevel = currentZoomLevel > 20 ? 20 : currentZoomLevel + 1;
@@ -412,7 +412,7 @@ function search_by_geo(lat, lon, zoom) {
 }
 
 function populate_carousel() {
-  document.getElementById('shader').innerHTML = (
+  document.getElementById('carouselAnchor').innerHTML = (
     '<div id="myCarousel" class="carousel slide" data-interval="false" data-ride="carousel">' +
     '<ol id="carousel-indicators" class="carousel-indicators"></ol>' +
     '<div id="carousel-inner" class="carousel-inner" role="listbox"></div>' +
@@ -428,9 +428,7 @@ function populate_carousel() {
   )
   for (var i = 0; i < urls.length; i++) {
     $('<div class="item">' +
-      '<img class="img-responsive center-block" src="' +
-      urls[i].image +
-      '">' +
+      '<img class="img-responsive center-block" src="' + urls[i].image + '">' +
       '<div class="carousel-caption">' +
       '</div>' +
       '</div>').appendTo('.carousel-inner');
@@ -450,7 +448,7 @@ visualizeHand = function(controller) {
     timeBetweenLoops: 1000,
     pauseOnHand: true
   }).on('riggedHand.meshAdded', function(handMesh, leapHand) {
-    handMesh.material.opacity = 0.9;
+    handMesh.material.opacity = 0.8;
   });
 
   var overlay = controller.plugins.playback.player.overlay;
