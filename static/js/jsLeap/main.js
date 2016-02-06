@@ -428,7 +428,8 @@ function populate_carousel() {
   )
   for (var i = 0; i < urls.length; i++) {
     $('<div class="item">' +
-      '<img class="img-responsive center-block" src="' + urls[i].image + '">' +
+      '<iframe class="center-block" src="' + urls[i].source + 'embed/"' +
+      'width = "500" height = "580" frameborder="0"></iframe>' +
       '<div class="carousel-caption">' +
       '</div>' +
       '</div>').appendTo('.carousel-inner');
