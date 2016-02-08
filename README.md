@@ -2,6 +2,8 @@
 # About
 Location-based Instagram explorer using Leap Motion.
 
+#Demo
+https://www.youtube.com/watch?v=F7Eprwk3RRU
 ## Inspiration
 We wanted to create a new, interactive way to explore the urban landscape. We sought to integrate social media, which we think is a highly prominent form of communication in high-population environments.
 
