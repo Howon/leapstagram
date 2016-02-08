@@ -4,7 +4,7 @@ var map,
   columbiaLat = 40.8093675,
   columbiaLon = -73.9613624;
 
-const INSTAGRAMCLIENTID = "YOUR_API_KEY_HERE";
+const INSTAGRAMCLIENTID = "22aaafad8e8447cf883c2cbb55663de5";
 
 function initMap() {
   map = new google.maps.Map(document.getElementById('map'), {
